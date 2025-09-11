@@ -7,6 +7,9 @@
   },
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest -c jest.config.js"
+  },
+  "devDependencies": {
+    "jest": "^30.1.3"
   }
 }
