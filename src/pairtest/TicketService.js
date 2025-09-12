@@ -1,6 +1,8 @@
 import TicketTypeRequest from './lib/TicketTypeRequest.js';
 import InvalidPurchaseException from './lib/InvalidPurchaseException.js';
 import { ErrorMessages, TicketPrices, TicketType } from './constants/index.js';
+import TicketPaymentService from '../thirdparty/paymentgateway/TicketPaymentService.js';
+import SeatReservationService from '../thirdparty/seatbooking/SeatReservationService.js';
 
 export default class TicketService {
   /**
@@ -13,6 +15,12 @@ export default class TicketService {
     const summary = this.#validateAndSummariseTicketRequests(ticketTypeRequests)
     
     this.#validateBusinessRules(summary)
+
+    const paymentService = new TicketPaymentService();
+    paymentService.makePayment(accountId, summary.totalCost);
+
+    const reservationService = new SeatReservationService();
+    reservationService.reserveSeat(accountId, summary.totalNumberOfSeats);
   }
 
   #validateAccountId(accountId) {
@@ -43,12 +51,14 @@ export default class TicketService {
         case TicketType.ADULT:
           summary.adultCount += ticketCount;
           summary.totalTicketCount += ticketCount;
-          summary.totalCost += [TicketPrices[TicketType.ADULT] * ticketCount];
+          summary.totalCost += TicketPrices[TicketType.ADULT] * ticketCount;
+          summary.totalNumberOfSeats += ticketCount;
           break;
         case TicketType.CHILD:
           summary.childCount += ticketCount;
           summary.totalTicketCount += ticketCount;
-          summary.totalCost += [TicketPrices[TicketType.CHILD] * ticketCount];
+          summary.totalCost += TicketPrices[TicketType.CHILD] * ticketCount;
+          summary.totalNumberOfSeats += ticketCount;
           break;
         case TicketType.INFANT:
           summary.infantCount += ticketCount;

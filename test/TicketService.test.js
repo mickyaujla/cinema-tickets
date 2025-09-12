@@ -1,4 +1,4 @@
-import { jest } from '@jest/globals';
+import { expect, jest } from '@jest/globals';
 import TicketService from '../src/pairtest/TicketService';
 import TicketTypeRequest from '../src/pairtest/lib/TicketTypeRequest.js';
 import InvalidPurchaseException from '../src/pairtest/lib/InvalidPurchaseException.js';
@@ -14,6 +14,8 @@ describe('TicketService', () => {
 
     beforeEach(() => {
         service = new TicketService();
+        jest.spyOn(TicketPaymentService.prototype, 'makePayment').mockImplementation(() => {});
+        jest.spyOn(SeatReservationService.prototype, 'reserveSeat').mockImplementation(() => {});
 
         jest.clearAllMocks();
     })
@@ -28,6 +30,9 @@ describe('TicketService', () => {
 
         expect(() => service.purchaseTickets(input, adultTicket))
         .toThrow(new InvalidPurchaseException(ErrorMessages.INVALID_ACCOUNT_ID));
+
+        expect(TicketPaymentService.prototype.makePayment).not.toHaveBeenCalled();
+        expect(SeatReservationService.prototype.reserveSeat).not.toHaveBeenCalled();
     });
 
     it('should throw an InvalidPurchaseException error when the Ticket Requests ticket count is <= 0', () => {
@@ -50,16 +55,25 @@ describe('TicketService', () => {
 
         expect(() => service.purchaseTickets(1, fakeRequest))
             .toThrow(new InvalidPurchaseException(`${ErrorMessages.UNKNOWN_TICKET_TYPE}: ${unknownTicketType}`));
+        
+        expect(TicketPaymentService.prototype.makePayment).not.toHaveBeenCalled();
+        expect(SeatReservationService.prototype.reserveSeat).not.toHaveBeenCalled();
     });
 
     it('should throw an InvalidPurchaseException error when more than 25 tickets are purchased', () => {
         expect(() => service.purchaseTickets(1, new TicketTypeRequest(TicketType.ADULT, 26)))
         .toThrow(new InvalidPurchaseException(ErrorMessages.TOO_MANY_TICKETS));
+
+        expect(TicketPaymentService.prototype.makePayment).not.toHaveBeenCalled();
+        expect(SeatReservationService.prototype.reserveSeat).not.toHaveBeenCalled();
     })
 
     it('should throw an InvalidPurchaseException error when there are no adult tickets', () => {
         expect(() => service.purchaseTickets(1, new TicketTypeRequest(TicketType.CHILD, 5)))
         .toThrow(new InvalidPurchaseException(ErrorMessages.NO_ADULT_TICKETS));
+
+        expect(TicketPaymentService.prototype.makePayment).not.toHaveBeenCalled();
+        expect(SeatReservationService.prototype.reserveSeat).not.toHaveBeenCalled();
     })
     
     it('should throw an InvalidPurchaseException error when there are more infants than adults', () => {
@@ -67,5 +81,20 @@ describe('TicketService', () => {
         
         expect(() => service.purchaseTickets(1, ...requests))
         .toThrow(new InvalidPurchaseException(ErrorMessages.MORE_INFANTS_THAN_ADULTS));
+
+        expect(TicketPaymentService.prototype.makePayment).not.toHaveBeenCalled();
+        expect(SeatReservationService.prototype.reserveSeat).not.toHaveBeenCalled();
+    })
+
+    it('should make payment and reserve seats when successfully validating all the business rules', () => {
+        let adultCount = 10, infantCount = 5, childCount = 5;
+        const requests = [new TicketTypeRequest(TicketType.ADULT, adultCount), new TicketTypeRequest(TicketType.INFANT, infantCount), new TicketTypeRequest(TicketType.CHILD, childCount)]
+        const totalCost = adultCount * TicketPrices[TicketType.ADULT] + childCount * TicketPrices[TicketType.CHILD]
+        
+        expect(() => service.purchaseTickets(1, ...requests))
+        .not.toThrow(InvalidPurchaseException);
+
+        expect(TicketPaymentService.prototype.makePayment).toHaveBeenCalledWith(1, totalCost);
+        expect(SeatReservationService.prototype.reserveSeat).toHaveBeenCalledWith(1, (adultCount + childCount));
     })
 })
