@@ -72,15 +72,7 @@ export default class TicketService {
   }
 
   #validateBusinessRules(summary) {
-    const { adultCount, childCount, infantCount, totalTicketCount, totalCost, totalNumberOfSeats, } = summary
-    // const summary = {
-    //   adult: 0,
-    //   child: 0,
-    //   infant: 0,
-    //   totalTicketCount: 0,
-    //   totalCost: 0,
-    //   totalNumberOfSeats: 0
-    // };
+    const { adultCount, childCount, infantCount, totalTicketCount, totalCost, totalNumberOfSeats, } = summary;
 
     if(totalTicketCount > 25) {
       throw new InvalidPurchaseException(ErrorMessages.TOO_MANY_TICKETS);
@@ -93,10 +85,5 @@ export default class TicketService {
     if (infantCount > adultCount) {
       throw new InvalidPurchaseException(ErrorMessages.MORE_INFANTS_THAN_ADULTS);
     }
-    /*
-      maximum 25 tickets ✅
-      1:1 infant to adult
-      adult >= 0
-    */
   }
 }
