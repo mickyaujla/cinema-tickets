@@ -75,6 +75,16 @@ For the purpose of this exercise, I kept validation and summarisation logic as p
 ### Dependency Injection
 Instead of directly instantiating `TicketPaymentService` and `SeatReservationService`, inject them into `TicketService`. This would improve testability and make the design more flexible.
 
+### Error Handling for External Services
+In a production environment, I would wrap calls to external services such as `TicketPaymentService` and `SeatReservationService` in `try...catch` blocks to ensure that unexpected failures (e.g. network issues, provider downtime) can be gracefully handled.  
+
+This might include:
+- Retrying failed requests (with exponential backoff)
+- Logging errors for monitoring/alerting
+- Returning user-friendly error messages rather than allowing exceptions to bubble up
+
+For the purposes of this take-home test, I omitted this to keep the implementation concise and because it was safe to assume the external providers behave reliably with no defects.
+
 ### More Granular Testing
 - Add integration tests covering interactions between services.  
 - Expand edge case coverage with additional unit tests (e.g. maximum ticket combinations, mixed request scenarios) as described above.
